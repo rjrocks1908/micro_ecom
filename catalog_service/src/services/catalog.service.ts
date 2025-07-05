@@ -13,7 +13,7 @@ export class CatalogService {
     }
     return result;
   }
-  async updateProduct(id: number, data: Product): Promise<Product> {
+  async updateProduct(id: number, data: any): Promise<Product> {
     const result = await this._respository.update(id, data);
     if (!result) {
       throw new Error("Unable to update product");
