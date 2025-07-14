@@ -1,18 +1,19 @@
 import app from "./app";
+import { logger } from "./utils";
 
 const PORT = process.env.PORT || 8000;
 
 export const startServer = async () => {
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info(`Server is running on port ${PORT}`);
   });
 
   process.on("uncaughtException", async (error) => {
-    console.log(error);
+    logger.error(error);
     process.exit(1);
   });
 };
 
 startServer().then(() => {
-  console.log(`Server is UP`);
+  logger.info(`Server is UP`);
 });

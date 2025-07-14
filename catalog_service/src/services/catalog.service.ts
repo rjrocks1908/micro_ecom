@@ -32,9 +32,6 @@ export class CatalogService {
 
   async getProductById(id: number) {
     const result = await this._respository.findOne(id);
-    if (!result) {
-      throw new Error("Unable to get product");
-    }
     return result;
   }
 

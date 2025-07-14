@@ -1,7 +1,7 @@
 services:
-  postgres:
+  catalog_db_server:
     image: "postgres:14.0"
-    container_name: postgres
+    container_name: catalog_db_server
     ports:
       - "5432:5432"
     deploy:
@@ -12,4 +12,19 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: catalog_service
     volumes:
-      - ./db-data/postgres/:/var/lib/postgresql/data
+      - ./db-data/catalog_db_server/:/var/lib/postgresql/data
+
+  order_db_server:
+    image: "postgres:14.0"
+    container_name: order_db_server
+    ports:
+      - "5433:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: order_service
+    volumes:
+      - ./db-data/order_db_server/:/var/lib/postgresql/data

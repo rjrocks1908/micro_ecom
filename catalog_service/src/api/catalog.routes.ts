@@ -22,8 +22,7 @@ router.post(
       const data = await catalogService.createProduct(input);
       res.status(201).json(data);
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json(err.message);
+      next(error);
     }
   }
 );
@@ -45,8 +44,7 @@ router.patch(
       const data = await catalogService.updateProduct(productId, input);
       res.status(200).json(data);
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json(err.message);
+      next(error);
     }
   }
 );
@@ -60,8 +58,7 @@ router.get(
       const data = await catalogService.getProducts(limit, offset);
       res.status(200).json(data);
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json(err.message);
+      next(error);
     }
   }
 );
@@ -74,8 +71,7 @@ router.get(
       const data = await catalogService.getProductById(productId);
       res.status(200).json(data);
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json(err.message);
+      next(error);
     }
   }
 );
@@ -88,8 +84,7 @@ router.delete(
       const data = await catalogService.deleteProduct(productId);
       res.status(200).json(data);
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json(err.message);
+      next(error);
     }
   }
 );
