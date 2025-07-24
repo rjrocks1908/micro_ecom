@@ -34,4 +34,13 @@ export class CatalogRepository implements ICatalogRepository {
     }
     return product;
   }
+  findStock(ids: number[]): Promise<Product[]> {
+    return this._prismaClient.product.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+  }
 }

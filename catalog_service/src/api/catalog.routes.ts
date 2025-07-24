@@ -89,4 +89,16 @@ router.delete(
   }
 );
 
+router.post(
+  "/products/stock",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await catalogService.getProductStock(req.body.ids);
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
