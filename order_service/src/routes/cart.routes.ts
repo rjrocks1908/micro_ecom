@@ -1,60 +1,118 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { CartRequestInput, CartRequestSchema } from "../dto/cartRequest.dto";
+import { CartRepository } from "../respository/cart.repository";
 import {
   CreateCart,
   DeleteCart,
   GetCart,
   UpdateCart,
 } from "../service/cart.service";
-import { CartRepository } from "../respository/cart.repository";
 import { ValidateRequest } from "../utils/validator";
-import { CartEditRequestInput, CartRequestInput } from "../dto/cartRequest.dto";
-import { CartRequestSchema } from "../dto/cartRequest.dto";
+import { RequestAuthorizer } from "./middleware";
 
 const router = Router();
 
-const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  next();
-};
+router.post(
+  "/cart",
+  RequestAuthorizer,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        next(new Error("User not found"));
+        return;
+      }
 
-router.post("/cart", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const err = ValidateRequest<CartRequestInput>(req.body, CartRequestSchema);
+      const err = ValidateRequest<CartRequestInput>(
+        req.body,
+        CartRequestSchema
+      );
 
-    if (err) {
-      res.status(400).json({ error: err });
+      if (err) {
+        res.status(400).json({ error: err });
+        return;
+      }
+
+      const input: CartRequestInput = req.body;
+
+      const response = await CreateCart(
+        { ...input, customerId: user.id },
+        CartRepository
+      );
+      res.json(response);
+    } catch (error) {
+      res.status(404).json({ error });
     }
-
-    const response = await CreateCart(
-      req.body as CartRequestInput,
-      CartRepository
-    );
-    res.json(response);
-  } catch (error) {
-    res.status(404).json({ error });
   }
-});
+);
 
-router.get("/cart", async (req: Request, res: Response) => {
-  const response = await GetCart(req.body.customerId, CartRepository);
-  res.json(response);
-});
+router.get(
+  "/cart",
+  RequestAuthorizer,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        next(new Error("User not found"));
+        return;
+      }
 
-router.patch("/cart/:lineItemId", async (req: Request, res: Response) => {
-  const lineItemId = req.params.lineItemId;
-  const response = await UpdateCart(
-    {
-      id: +lineItemId,
-      qty: req.body.qty,
-    },
-    CartRepository
-  );
-  res.json(response);
-});
+      const response = await GetCart(user.id, CartRepository);
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-router.delete("/cart/:lineItemId", async (req: Request, res: Response) => {
-  const lineItemId = req.params.lineItemId;
-  const response = await DeleteCart(+lineItemId, CartRepository);
-  res.json(response);
-});
+router.patch(
+  "/cart/:lineItemId",
+  RequestAuthorizer,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        next(new Error("User not found"));
+        return;
+      }
+
+      const lineItemId = req.params.lineItemId;
+      const response = await UpdateCart(
+        {
+          id: +lineItemId,
+          qty: req.body.qty,
+          customerId: user.id,
+        },
+        CartRepository
+      );
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.delete(
+  "/cart/:lineItemId",
+  RequestAuthorizer,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        next(new Error("User not found"));
+        return;
+      }
+
+      const lineItemId = req.params.lineItemId;
+      const response = await DeleteCart(
+        { id: +lineItemId, customerId: user.id },
+        CartRepository
+      );
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default router;

@@ -7,14 +7,19 @@ import {
   cartTable,
 } from "../db/schema";
 import { NotFoundError } from "../utils";
+import { CartWithLineItems } from "../dto/cartRequest.dto";
 
 // declare repository type
 export type CartRepositoryType = {
   createCart: (customerId: number, lineItem: CartLineItem) => Promise<number>;
-  findCart: (id: number) => Promise<Cart>;
+  findCart: (id: number) => Promise<CartWithLineItems>;
   updateCart: (id: number, qty: number) => Promise<CartLineItem>;
   deleteCart: (id: number) => Promise<boolean>;
   clearCartData: (id: number) => Promise<boolean>;
+  findCartByProductId: (
+    custommerId: number,
+    productId: number
+  ) => Promise<CartLineItem>;
 };
 
 const createCart = async (
@@ -49,7 +54,7 @@ const createCart = async (
   return id;
 };
 
-const findCart = async (id: number): Promise<Cart> => {
+const findCart = async (id: number): Promise<CartWithLineItems> => {
   const cart = await DB.query.cartTable.findFirst({
     where: (cartTable, { eq }) => eq(cartTable.customerId, id),
     with: {
@@ -91,10 +96,37 @@ const clearCartData = async (id: number): Promise<boolean> => {
   return true;
 };
 
+const findCartByProductId = async (
+  custommerId: number,
+  productId: number
+): Promise<CartLineItem> => {
+  const cart = await DB.query.cartTable.findFirst({
+    where: (cartTable, { eq }) => eq(cartTable.customerId, custommerId),
+    with: {
+      lineItems: true,
+    },
+  });
+
+  if (!cart) {
+    throw new NotFoundError("cart not found");
+  }
+
+  const cartLineItem = cart.lineItems.find(
+    (lineItem) => lineItem.productId === productId
+  );
+
+  if (!cartLineItem) {
+    throw new NotFoundError("cart line item not found");
+  }
+
+  return cartLineItem;
+};
+
 export const CartRepository: CartRepositoryType = {
   createCart,
   findCart,
   updateCart,
   deleteCart,
   clearCartData,
+  findCartByProductId,
 };

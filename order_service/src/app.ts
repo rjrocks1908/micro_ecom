@@ -1,23 +1,42 @@
-import express, { Request, Response } from "express";
 import cors from "cors";
+import express, { Request, Response } from "express";
+import { Consumer, Producer } from "kafkajs";
 import cartRoutes from "./routes/cart.routes";
 import orderRoutes from "./routes/order.routes";
-import { httpLogger, HandleErrorWithLogger } from "./utils";
+import { HandleErrorWithLogger, httpLogger, MessageBroker } from "./utils";
 
-const app = express();
+export const ExpressApp = async () => {
+  const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(httpLogger);
+  app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(httpLogger);
 
-app.use("/api", cartRoutes);
-app.use("/api", orderRoutes);
+  // 1st step: connect to the producer and consumer
+  const producer = await MessageBroker.connectProducer<Producer>();
+  producer.on("producer.connect", () => {
+    console.log("producer connected")
+  })
 
-app.use("/", (req: Request, res: Response) => {
-  res.status(200).json({ message: "Hello from Order Service" });
-});
+  const consumer = await MessageBroker.connectConsumer<Consumer>();
+  consumer.on("consumer.connect", () => {
+    console.log("consumer connected")
+  })
 
-app.use(HandleErrorWithLogger);
+  // 2nd step: subscribe to the topic or publish to the topic
+  await MessageBroker.subscribe((message) => {
+    console.log("message received", message)
+  }, "OrderEvents")
 
-export default app;
+  app.use("/api", cartRoutes);
+  app.use("/api", orderRoutes);
+
+  app.use("/", (req: Request, res: Response) => {
+    res.status(200).json({ message: "Hello from Order Service" });
+  });
+
+  app.use(HandleErrorWithLogger);
+
+  return app;
+};
